@@ -271,15 +271,13 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
   }
 }
 </script>
 
 <script type="module">
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 // --- Scene setup ---
 const container = document.getElementById('canvas-container');
@@ -334,32 +332,184 @@ const starsMaterial = new THREE.PointsMaterial({
 const stars = new THREE.Points(starsGeometry, starsMaterial);
 scene.add(stars);
 
-// --- Load GLB airplane model ---
+// --- Airplane construction ---
 const planeGroup = new THREE.Group();
 
-const loader = new GLTFLoader();
-loader.load(
-  'https://raw.githubusercontent.com/nicola-attico/3d-models/main/boeing_777_airplane.glb',
-  (gltf) => {
-    const model = gltf.scene;
-    model.traverse((child) => {
-      if (child.isMesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-      }
-    });
-    // The model's nose faces -Z (Three.js default).
-    // Rotate so nose faces +Z to match our animation convention
-    model.rotation.y = Math.PI;
-    planeGroup.add(model);
-  },
-  (xhr) => {
-    console.log(`Loading model: ${Math.round((xhr.loaded / xhr.total) * 100)}%`);
-  },
-  (error) => {
-    console.error('Error loading model:', error);
-  }
-);
+// Fuselage (body)
+const fuselageGeo = new THREE.CylinderGeometry(0.3, 0.15, 2.8, 12, 1, true);
+const fuselageMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+  clearcoat: 0.1,
+});
+const fuselage = new THREE.Mesh(fuselageGeo, fuselageMat);
+fuselage.rotation.x = Math.PI / 2;
+fuselage.position.z = 0;
+planeGroup.add(fuselage);
+
+// Nose cone
+const noseGeo = new THREE.SphereGeometry(0.3, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+const noseMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+const nose = new THREE.Mesh(noseGeo, noseMat);
+nose.rotation.x = -Math.PI / 2;
+nose.position.z = 1.4;
+planeGroup.add(nose);
+
+// Tail cone
+const tailConeGeo = new THREE.ConeGeometry(0.15, 0.6, 12);
+const tailConeMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+const tailCone = new THREE.Mesh(tailConeGeo, tailConeMat);
+tailCone.rotation.x = Math.PI / 2;
+tailCone.position.z = -1.4;
+planeGroup.add(tailCone);
+
+// Main wings
+const wingShape = new THREE.Shape();
+wingShape.moveTo(0, 0);
+wingShape.quadraticCurveTo(0.15, 0.1, 1.8, 0.05);
+wingShape.quadraticCurveTo(1.9, 0.04, 1.9, 0);
+wingShape.quadraticCurveTo(1.9, -0.04, 1.8, -0.05);
+wingShape.quadraticCurveTo(0.15, -0.1, 0, 0);
+
+const wingExtrudeSettings = { depth: 0.04, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.01, bevelSegments: 4 };
+const wingGeo = new THREE.ExtrudeGeometry(wingShape, wingExtrudeSettings);
+const wingMat = new THREE.MeshPhysicalMaterial({
+  color: 0xd0d0d0,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+
+const wingLeft = new THREE.Mesh(wingGeo, wingMat);
+wingLeft.position.set(0, 0.05, 0.2);
+wingLeft.rotation.x = -0.02;
+planeGroup.add(wingLeft);
+
+const wingRight = wingLeft.clone();
+wingRight.scale.x = -1;
+planeGroup.add(wingRight);
+
+// Tail wings (horizontal stabilizers)
+const tailWingShape = new THREE.Shape();
+tailWingShape.moveTo(0, 0);
+tailWingShape.quadraticCurveTo(0.1, 0.06, 0.7, 0.03);
+tailWingShape.quadraticCurveTo(0.75, 0.02, 0.75, 0);
+tailWingShape.quadraticCurveTo(0.75, -0.02, 0.7, -0.03);
+tailWingShape.quadraticCurveTo(0.1, -0.06, 0, 0);
+
+const tailWingGeo = new THREE.ExtrudeGeometry(tailWingShape, wingExtrudeSettings);
+const tailWingMat = new THREE.MeshPhysicalMaterial({
+  color: 0xc8c8c8,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+
+const tailWingLeft = new THREE.Mesh(tailWingGeo, tailWingMat);
+tailWingLeft.position.set(0, 0.05, -1.2);
+planeGroup.add(tailWingLeft);
+
+const tailWingRight = tailWingLeft.clone();
+tailWingRight.scale.x = -1;
+planeGroup.add(tailWingRight);
+
+// Vertical stabilizer
+const finShape = new THREE.Shape();
+finShape.moveTo(0, 0);
+finShape.quadraticCurveTo(0.05, 0.25, 0.02, 0.6);
+finShape.quadraticCurveTo(0.01, 0.63, 0, 0.63);
+finShape.quadraticCurveTo(-0.01, 0.63, -0.02, 0.6);
+finShape.quadraticCurveTo(-0.05, 0.25, 0, 0);
+const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.005 });
+const finMat = new THREE.MeshPhysicalMaterial({
+  color: 0xc8c8c8,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+const fin = new THREE.Mesh(finGeo, finMat);
+fin.position.set(0, 0.3, -1.3);
+fin.rotation.x = 0.1;
+planeGroup.add(fin);
+
+// Engines (2 under wings)
+const engineMat = new THREE.MeshPhysicalMaterial({
+  color: 0x666666,
+  metalness: 0.9,
+  roughness: 0.3,
+});
+
+function createEngine(x, z) {
+  const group = new THREE.Group();
+
+  const nacelleGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.3, 16, 1, true);
+  const nacelle = new THREE.Mesh(nacelleGeo, engineMat);
+  nacelle.rotation.x = Math.PI / 2;
+  group.add(nacelle);
+
+  const fanGeo = new THREE.CircleGeometry(0.08, 16);
+  const fanMat = new THREE.MeshPhysicalMaterial({
+    color: 0x444444,
+    metalness: 0.9,
+    roughness: 0.4,
+    side: THREE.DoubleSide,
+  });
+  const fan = new THREE.Mesh(fanGeo, fanMat);
+  fan.position.z = 0.15;
+  group.add(fan);
+
+  const fanBack = fan.clone();
+  fanBack.position.z = -0.15;
+  group.add(fanBack);
+
+  group.position.set(x, -0.15, z + 0.1);
+  return group;
+}
+
+planeGroup.add(createEngine(0.5, 0.6));
+planeGroup.add(createEngine(-0.5, 0.6));
+
+// Cockpit windows
+const windowMat = new THREE.MeshPhysicalMaterial({
+  color: 0x88ccff,
+  metalness: 0.3,
+  roughness: 0.1,
+  transparent: true,
+  opacity: 0.7,
+  clearcoat: 1,
+});
+const windowGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI, 0, Math.PI * 0.6);
+const windowMesh = new THREE.Mesh(windowGeo, windowMat);
+windowMesh.position.set(0, 0.1, 1.3);
+windowMesh.rotation.x = -0.2;
+windowMesh.scale.set(1, 0.4, 0.6);
+planeGroup.add(windowMesh);
+
+// Window line along fuselage (small dots)
+const windowDotMat = new THREE.MeshPhysicalMaterial({
+  color: 0x88ccff,
+  transparent: true,
+  opacity: 0.4,
+  emissive: 0x4488ff,
+  emissiveIntensity: 0.2,
+});
+for (let i = -8; i < 8; i++) {
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.03, 8), windowDotMat);
+  dot.position.set(0.25, 0.15, i * 0.16 + 0.2);
+  dot.lookAt(0.25, 0.15, 0);
+  planeGroup.add(dot);
+
+  const dot2 = dot.clone();
+  dot2.position.x = -0.25;
+  dot2.lookAt(-0.25, 0.15, 0);
+  planeGroup.add(dot2);
+}
 
 scene.add(planeGroup);
 
@@ -416,7 +566,7 @@ function animate() {
   planeGroup.rotation.z = rz;
 
   // Scale grows as it approaches the camera
-  const s = 0.025 + p * 0.03;
+  const s = 0.5 + p * 0.6;
   planeGroup.scale.set(s, s, s);
 
   // Camera stays fixed
