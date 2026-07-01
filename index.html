@@ -336,7 +336,6 @@ scene.add(stars);
 
 // --- Load GLB airplane model ---
 const planeGroup = new THREE.Group();
-planeGroup.scale.set(0.05, 0.05, 0.05);
 
 const loader = new GLTFLoader();
 loader.load(
@@ -417,7 +416,7 @@ function animate() {
   planeGroup.rotation.z = rz;
 
   // Scale grows as it approaches the camera
-  const s = 0.5 + p * 0.6;
+  const s = 0.025 + p * 0.03;
   planeGroup.scale.set(s, s, s);
 
   // Camera stays fixed
