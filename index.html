@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HYER® - Beyond Travel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #000D10;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .overlay {
+      position: relative;
+      z-index: 10;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px 48px;
+      pointer-events: auto;
+    }
+
+    .logo svg {
+      height: 24px;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 40px;
+    }
+
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+      transition: opacity 0.3s;
+    }
+
+    nav a:hover { opacity: 1; }
+
+    .menu-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+
+    .menu-btn span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: #fff;
+      position: relative;
+    }
+
+    .menu-btn span::before,
+    .menu-btn span::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: #fff;
+      left: 0;
+    }
+
+    .menu-btn span::before { top: -6px; }
+    .menu-btn span::after { top: 6px; }
+
+    .hero-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 48px;
+    }
+
+    .hero-title {
+      font-size: 120px;
+      font-weight: 300;
+      letter-spacing: -3px;
+      line-height: 1;
+      margin-bottom: auto;
+      padding-top: 80px;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: fadeUp 1s 0.3s forwards;
+    }
+
+    .hero-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 48px;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: fadeUp 1s 0.6s forwards;
+    }
+
+    .hero-subtitle {
+      font-size: 13px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.6;
+      font-weight: 400;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+    }
+
+    .hero-buttons a {
+      display: inline-block;
+      padding: 12px 28px;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s;
+      pointer-events: auto;
+    }
+
+    .hero-buttons a:hover {
+      background: #fff;
+      color: #000D10;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .scroll-section {
+      min-height: 200vh;
+      background: #000D10;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeUp 1s 1s forwards;
+      pointer-events: none;
+    }
+
+    .scroll-indicator span {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      opacity: 0.4;
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+    }
+
+    @media (max-width: 768px) {
+      header { padding: 20px 24px; }
+      .hero-content { padding: 0 24px; }
+      .hero-title { font-size: 48px; letter-spacing: -1px; }
+      nav ul { gap: 20px; }
+      nav a { font-size: 12px; }
+      .hero-bottom { flex-direction: column; align-items: flex-start; gap: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="hero">
+  <div id="canvas-container"></div>
+
+  <div class="overlay">
+    <header>
+      <div class="logo">
+        <svg viewBox="0 0 959 376" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:20px;">
+          <path d="M254.658 0H195.027V302.128H254.658V0Z" fill="white"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M0 0H59.6306V302.128H0V0ZM59.6313 123.237H195.028C195.028 150.129 173.28 171.643 146.622 171.643H59.6313V123.237Z" fill="white"/>
+          <path d="M291.372 375.088V330.892H313.119C332.295 330.892 340.713 331.359 350.535 307.507L353.107 301.193L267.286 77.8706H330.19L380.935 239.458L433.082 77.8706H491.31L409.23 295.347C382.572 365.033 371.347 374.854 315.458 374.854H291.372V375.088Z" fill="white"/>
+          <path d="M540.885 205.784C544.158 244.134 570.115 262.842 597.475 262.842C615.481 262.842 632.786 256.528 644.478 237.119H703.875C691.715 270.559 659.21 307.507 597.943 307.507C525.918 307.507 483.826 253.722 483.826 189.181C483.826 122.535 530.128 72.9595 596.306 72.9595C665.524 72.9595 708.318 126.744 706.213 205.784H540.885ZM541.82 166.264H647.986C646.817 128.381 620.158 115.052 595.838 115.052C574.324 115.052 546.263 128.381 541.82 166.264Z" fill="white"/>
+          <path d="M857.278 133.292C848.86 132.123 841.844 132.123 833.426 132.123C805.131 132.123 786.423 142.646 786.423 184.738V302.362H728.897V77.8706H785.488V117.157C798.349 89.329 818.46 78.3383 844.651 78.3383C848.392 78.3383 853.303 78.806 857.044 79.2737V133.292H857.278Z" fill="white"/>
+          <path d="M917.843 82.3136C895.16 82.3136 876.687 63.8398 876.687 41.1568C876.687 18.4738 895.16 0 917.843 0C940.526 0 959 18.4738 959 41.1568C959 63.8398 940.526 82.3136 917.843 82.3136ZM917.843 7.01537C898.902 7.01537 883.702 22.4492 883.702 41.1568C883.702 60.0983 899.136 75.2983 917.843 75.2983C936.785 75.2983 951.985 59.8645 951.985 41.1568C951.985 22.2153 936.551 7.01537 917.843 7.01537Z" fill="white"/>
+          <path d="M919.014 44.8982H917.143H910.829V60.0982H903.112V21.5137H915.74C928.368 21.5137 933.278 25.0214 933.278 33.2059C933.278 37.649 931.174 41.3905 926.263 43.2613L934.915 59.8643H926.497L919.014 44.8982ZM910.829 27.3598V39.0521H917.143C923.223 39.0521 925.561 37.1813 925.561 33.2059C925.561 28.7629 921.82 27.3598 916.675 27.3598H910.829Z" fill="white"/>
+        </svg>
+      </div>
+
+      <nav>
+        <ul>
+          <li><a href="#">Solutions</a></li>
+          <li><a href="#">About us</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </nav>
+
+      <button class="menu-btn"><span></span></button>
+    </header>
+
+    <div class="hero-content">
+      <h1 class="hero-title">Beyond Travel.</h1>
+
+      <div class="hero-bottom">
+        <span class="hero-subtitle">Flights, stays and personalised experiences.</span>
+        <div class="hero-buttons">
+          <a href="#">Hyer® Stays</a>
+          <a href="#">Hyer® Travel</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </div>
+</div>
+
+<div class="scroll-section"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// --- Scene setup ---
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000D10);
+
+const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+camera.position.set(0, 2, 14);
+camera.lookAt(0, 0, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.5;
+container.appendChild(renderer.domElement);
+
+// --- Lights ---
+const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+scene.add(ambientLight);
+
+const mainLight = new THREE.DirectionalLight(0xffeedd, 2);
+mainLight.position.set(5, 10, 7);
+mainLight.castShadow = true;
+scene.add(mainLight);
+
+const fillLight = new THREE.DirectionalLight(0x4488ff, 0.8);
+fillLight.position.set(-3, 4, -5);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xffffff, 1);
+rimLight.position.set(0, -2, -8);
+scene.add(rimLight);
+
+// --- Starfield background ---
+const starsGeometry = new THREE.BufferGeometry();
+const starsCount = 2000;
+const starPositions = new Float32Array(starsCount * 3);
+for (let i = 0; i < starsCount * 3; i++) {
+  starPositions[i] = (Math.random() - 0.5) * 200;
+}
+starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+const starsMaterial = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.15,
+  transparent: true,
+  opacity: 0.8,
+  sizeAttenuation: true,
+});
+const stars = new THREE.Points(starsGeometry, starsMaterial);
+scene.add(stars);
+
+// --- Airplane construction ---
+const planeGroup = new THREE.Group();
+
+// Fuselage (body)
+const fuselageGeo = new THREE.CylinderGeometry(0.3, 0.15, 2.8, 12, 1, true);
+const fuselageMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+  clearcoat: 0.1,
+});
+const fuselage = new THREE.Mesh(fuselageGeo, fuselageMat);
+fuselage.rotation.x = Math.PI / 2;
+fuselage.position.z = 0;
+planeGroup.add(fuselage);
+
+// Nose cone
+const noseGeo = new THREE.SphereGeometry(0.3, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+const noseMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+const nose = new THREE.Mesh(noseGeo, noseMat);
+nose.rotation.x = -Math.PI / 2;
+nose.position.z = 1.4;
+planeGroup.add(nose);
+
+// Tail cone
+const tailConeGeo = new THREE.ConeGeometry(0.15, 0.6, 12);
+const tailConeMat = new THREE.MeshPhysicalMaterial({
+  color: 0xe8e8e8,
+  metalness: 0.8,
+  roughness: 0.2,
+});
+const tailCone = new THREE.Mesh(tailConeGeo, tailConeMat);
+tailCone.rotation.x = Math.PI / 2;
+tailCone.position.z = -1.4;
+planeGroup.add(tailCone);
+
+// Main wings
+const wingShape = new THREE.Shape();
+wingShape.moveTo(0, 0);
+wingShape.quadraticCurveTo(0.15, 0.1, 1.8, 0.05);
+wingShape.quadraticCurveTo(1.9, 0.04, 1.9, 0);
+wingShape.quadraticCurveTo(1.9, -0.04, 1.8, -0.05);
+wingShape.quadraticCurveTo(0.15, -0.1, 0, 0);
+
+const wingExtrudeSettings = { depth: 0.04, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.01, bevelSegments: 4 };
+const wingGeo = new THREE.ExtrudeGeometry(wingShape, wingExtrudeSettings);
+const wingMat = new THREE.MeshPhysicalMaterial({
+  color: 0xd0d0d0,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+
+const wingLeft = new THREE.Mesh(wingGeo, wingMat);
+wingLeft.position.set(0, 0.05, 0.2);
+wingLeft.rotation.x = -0.02;
+planeGroup.add(wingLeft);
+
+const wingRight = wingLeft.clone();
+wingRight.scale.x = -1;
+planeGroup.add(wingRight);
+
+// Tail wings (horizontal stabilizers)
+const tailWingShape = new THREE.Shape();
+tailWingShape.moveTo(0, 0);
+tailWingShape.quadraticCurveTo(0.1, 0.06, 0.7, 0.03);
+tailWingShape.quadraticCurveTo(0.75, 0.02, 0.75, 0);
+tailWingShape.quadraticCurveTo(0.75, -0.02, 0.7, -0.03);
+tailWingShape.quadraticCurveTo(0.1, -0.06, 0, 0);
+
+const tailWingGeo = new THREE.ExtrudeGeometry(tailWingShape, wingExtrudeSettings);
+const tailWingMat = new THREE.MeshPhysicalMaterial({
+  color: 0xc8c8c8,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+
+const tailWingLeft = new THREE.Mesh(tailWingGeo, tailWingMat);
+tailWingLeft.position.set(0, 0.05, -1.2);
+planeGroup.add(tailWingLeft);
+
+const tailWingRight = tailWingLeft.clone();
+tailWingRight.scale.x = -1;
+planeGroup.add(tailWingRight);
+
+// Vertical stabilizer
+const finShape = new THREE.Shape();
+finShape.moveTo(0, 0);
+finShape.quadraticCurveTo(0.05, 0.25, 0.02, 0.6);
+finShape.quadraticCurveTo(0.01, 0.63, 0, 0.63);
+finShape.quadraticCurveTo(-0.01, 0.63, -0.02, 0.6);
+finShape.quadraticCurveTo(-0.05, 0.25, 0, 0);
+const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.03, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.005 });
+const finMat = new THREE.MeshPhysicalMaterial({
+  color: 0xc8c8c8,
+  metalness: 0.7,
+  roughness: 0.3,
+});
+const fin = new THREE.Mesh(finGeo, finMat);
+fin.position.set(0, 0.3, -1.3);
+fin.rotation.x = 0.1;
+planeGroup.add(fin);
+
+// Engines (2 under wings)
+const engineMat = new THREE.MeshPhysicalMaterial({
+  color: 0x666666,
+  metalness: 0.9,
+  roughness: 0.3,
+});
+
+function createEngine(x, z) {
+  const group = new THREE.Group();
+
+  const nacelleGeo = new THREE.CylinderGeometry(0.08, 0.12, 0.3, 16, 1, true);
+  const nacelle = new THREE.Mesh(nacelleGeo, engineMat);
+  nacelle.rotation.x = Math.PI / 2;
+  group.add(nacelle);
+
+  const fanGeo = new THREE.CircleGeometry(0.08, 16);
+  const fanMat = new THREE.MeshPhysicalMaterial({
+    color: 0x444444,
+    metalness: 0.9,
+    roughness: 0.4,
+    side: THREE.DoubleSide,
+  });
+  const fan = new THREE.Mesh(fanGeo, fanMat);
+  fan.position.z = 0.15;
+  group.add(fan);
+
+  const fanBack = fan.clone();
+  fanBack.position.z = -0.15;
+  group.add(fanBack);
+
+  group.position.set(x, -0.15, z + 0.1);
+  return group;
+}
+
+planeGroup.add(createEngine(0.5, 0.6));
+planeGroup.add(createEngine(-0.5, 0.6));
+
+// Cockpit windows
+const windowMat = new THREE.MeshPhysicalMaterial({
+  color: 0x88ccff,
+  metalness: 0.3,
+  roughness: 0.1,
+  transparent: true,
+  opacity: 0.7,
+  clearcoat: 1,
+});
+const windowGeo = new THREE.SphereGeometry(0.1, 8, 8, 0, Math.PI, 0, Math.PI * 0.6);
+const windowMesh = new THREE.Mesh(windowGeo, windowMat);
+windowMesh.position.set(0, 0.1, 1.3);
+windowMesh.rotation.x = -0.2;
+windowMesh.scale.set(1, 0.4, 0.6);
+planeGroup.add(windowMesh);
+
+// Window line along fuselage (small dots)
+const windowDotMat = new THREE.MeshPhysicalMaterial({
+  color: 0x88ccff,
+  transparent: true,
+  opacity: 0.4,
+  emissive: 0x4488ff,
+  emissiveIntensity: 0.2,
+});
+for (let i = -8; i < 8; i++) {
+  const dot = new THREE.Mesh(new THREE.CircleGeometry(0.03, 8), windowDotMat);
+  dot.position.set(0.25, 0.15, i * 0.16 + 0.2);
+  dot.lookAt(0.25, 0.15, 0);
+  planeGroup.add(dot);
+
+  const dot2 = dot.clone();
+  dot2.position.x = -0.25;
+  dot2.lookAt(-0.25, 0.15, 0);
+  planeGroup.add(dot2);
+}
+
+scene.add(planeGroup);
+
+// --- Scroll animation ---
+let scrollProgress = 0;
+
+function updateScroll() {
+  const hero = document.getElementById('hero');
+  const heroHeight = hero.offsetHeight;
+  const scrollY = window.scrollY;
+  const maxScroll = heroHeight * 0.35;
+  scrollProgress = Math.min(scrollY / maxScroll, 1);
+}
+
+window.addEventListener('scroll', updateScroll);
+
+// --- Resize ---
+function onResize() {
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+
+window.addEventListener('resize', onResize);
+
+let time = 0;
+
+// --- Animation loop ---
+function animate() {
+  requestAnimationFrame(animate);
+
+  time += 0.01;
+  const p = scrollProgress;
+
+  // --- Plane position ---
+  // Flies from far-left/back to right/front (coming toward the viewer)
+  const tx = -6 + p * 11;
+  const ty = 0.5 + Math.sin(time) * 0.05 - p * 0.5;
+  const tz = -6 + p * 12;
+
+  planeGroup.position.set(tx, ty, tz);
+
+  // --- Plane rotation ---
+  // Constant orientation: always faces right and slightly toward the viewer
+  // ry = facing ~43° right of straight-ahead (matches the flight path angle)
+  const rx = -0.03;
+  const ry = 0.75;
+  const rz = 0.08;
+
+  planeGroup.rotation.x = rx;
+  planeGroup.rotation.y = ry;
+  planeGroup.rotation.z = rz;
+
+  // Scale grows as it approaches the camera
+  const s = 0.5 + p * 0.6;
+  planeGroup.scale.set(s, s, s);
+
+  // Camera stays fixed
+  camera.position.set(0, 2, 12);
+  camera.lookAt(0, 0, 0);
+
+  // Stars rotate slowly
+  stars.rotation.y = time * 0.015;
+  stars.rotation.x = Math.sin(time * 0.008) * 0.03;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+updateScroll();
+</script>
+
+</body>
+</html>
