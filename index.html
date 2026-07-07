@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HYER® - Beyond Travel</title>
+  <title>PlaneHero Demo</title>
   <script type="importmap">
   {
     "imports": {
@@ -12,35 +12,61 @@
     }
   }
   </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #0a0a0f; color: #fff; }
+    .hero { height: 100vh; }
+    .content {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      opacity: 0.3;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+  </style>
 </head>
 <body>
-  <div id="hero"></div>
-  <div class="scroll-section"></div>
+
+  <div id="hero" class="hero"></div>
+  <div class="content">Section 1 — the plane flies through here</div>
+  <div class="content">Section 2 — still visible, overlapping</div>
+  <div class="content">Section 3 — Y-axis flexibility in action</div>
 
   <script type="module">
-    import { HyerHero } from './hyer-hero.js';
+    import { PlaneHero } from './plane-component.js';
 
-    new HyerHero('#hero', {
+    new PlaneHero('#hero', {
       model: 'plane1.glb',
-      preset: 'flyover',
-      overlay: {
-        title: '',
-        subtitle: 'Flights, stays and personalised experiences.',
-        buttons: [
-          { text: 'Hyer\u00ae Stays', href: '#' },
-          { text: 'Hyer\u00ae Travel', href: '#' },
-        ],
-        nav: [
-          { text: 'Solutions', href: '#' },
-          { text: 'About us', href: '#' },
-          { text: 'Contact', href: '#' },
-        ],
-      },
+      settings: {
+        desktop: {
+          easing: "easeInOut",
+          sx: -6, sy: 0.5, sz: -6,
+          ex: 5, ey: 0, ez: 6,
+          ss: 2, es: 4.4,
+          rx: -0.03, ry: 0.75, rz: 0.08,
+          speed: 0.35, floatAmp: 0.05, floatSpd: 1,
+          camZ: 12, camY: 2
+        },
+        mobile: {
+          easing: "linear",
+          sx: -2, sy: 3, sz: -8,
+          ex: 2, ey: -1, ez: 4,
+          ss: 1.5, es: 3.5,
+          rx: 0.1, ry: 0.5, rz: 0.05,
+          speed: 0.4, floatAmp: 0.03, floatSpd: 0.8,
+          camZ: 14, camY: 2.5
+        }
+      }
     });
+
+    // Or just use a flat settings object (no breakpoint switching):
+    // new PlaneHero('#hero', {
+    //   model: 'plane1.glb',
+    //   settings: { easing: "easeInOut", sx: -6, sy: 0.5, sz: -6, ex: 5, ey: 0, ez: 6, ss: 2, es: 4.4, rx: -0.03, ry: 0.75, rz: 0.08, speed: 0.35, floatAmp: 0.05, floatSpd: 1, camZ: 12, camY: 2 }
+    // });
   </script>
-  <div style="height: 100vh; background-color: lightblue;">
-  100vh tall content
-</div>
 
 </body>
 </html>
